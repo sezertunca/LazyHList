@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
+public struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
     Collections : RandomAccessCollection,
     Collections.Index == Int,
     Collections.Element : RandomAccessCollection,
@@ -10,24 +10,29 @@ struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
     CellContent : View
 {
     
-    typealias Row = Collections.Element
-    typealias Data = Row.Element
-    typealias ContentForData = (Data) -> CellContent
-    typealias ScrollDirection = UICollectionView.ScrollDirection
-    typealias SizeForData = (Data) -> CGSize
-    typealias CustomSizeForData = (UICollectionView, UICollectionViewLayout, Data) -> CGSize
-    typealias RawCustomize = (UICollectionView) -> Void
+    public typealias Row = Collections.Element
+    public typealias Data = Row.Element
+    public typealias ContentForData = (Data) -> CellContent
+    public typealias ScrollDirection = UICollectionView.ScrollDirection
+    public typealias SizeForData = (Data) -> CGSize
+    public typealias CustomSizeForData = (UICollectionView, UICollectionViewLayout, Data) -> CGSize
+    public typealias RawCustomize = (UICollectionView) -> Void
     
-    enum ContentSize {
+    public enum ContentSize {
         case fixed(CGSize)
         case variable(SizeForData)
         case crossAxisFilled(mainAxisLength: CGFloat)
         case custom(CustomSizeForData)
     }
     
-    struct ItemSpacing : Hashable {
-        var mainAxisSpacing: CGFloat
-        var crossAxisSpacing: CGFloat
+    public struct ItemSpacing : Hashable {
+        public var mainAxisSpacing: CGFloat
+        public var crossAxisSpacing: CGFloat
+        
+        public init(mainAxisSpacing: CGFloat, crossAxisSpacing: CGFloat) {
+            self.mainAxisSpacing = mainAxisSpacing
+            self.crossAxisSpacing = crossAxisSpacing
+        }
     }
     
     fileprivate let collections: Collections
@@ -50,11 +55,11 @@ struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
         self.contentForData = contentForData
     }
 
-    func makeCoordinator() -> Coordinator {
+    public func makeCoordinator() -> Coordinator {
         return Coordinator(view: self)
     }
 
-    func makeUIViewController(context: Context) -> ViewController {
+    public func makeUIViewController(context: Context) -> ViewController {
         let coordinator = context.coordinator
         let viewController = ViewController(coordinator: coordinator, scrollDirection: .horizontal)
         coordinator.viewController = viewController
@@ -62,7 +67,7 @@ struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
         return viewController
     }
 
-    func updateUIViewController(_ uiViewController: ViewController, context: Context) {
+    public func updateUIViewController(_ uiViewController: ViewController, context: Context) {
         context.coordinator.view = self
         uiViewController.layout.scrollDirection = .horizontal
         self.rawCustomize?(uiViewController.collectionView)
@@ -71,7 +76,7 @@ struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
     }
 }
 
-extension LazyHList {
+public extension LazyHList {
     
     init<Collection>(
         items: Collection,
@@ -91,7 +96,6 @@ extension LazyHList {
 }
 
 extension LazyHList {
-    
     fileprivate static var cellReuseIdentifier: String {
         return "HostedCollectionViewCell"
     }
@@ -99,7 +103,7 @@ extension LazyHList {
 
 extension LazyHList {
 
-    final class ViewController : UIViewController {
+    public final class ViewController: UIViewController {
 
         fileprivate let layout: UICollectionViewFlowLayout
         fileprivate let collectionView: UICollectionView
@@ -122,7 +126,7 @@ extension LazyHList {
             fatalError("Can't build from interface.")
         }
 
-        override func loadView() {
+        public override func loadView() {
             self.view = self.collectionView
         }
     }
@@ -130,7 +134,7 @@ extension LazyHList {
 
 extension LazyHList {
     
-    final class Coordinator: NSObject, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    public final class Coordinator: NSObject, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
         
         fileprivate var view: LazyHList
         fileprivate var viewController: ViewController?
@@ -139,15 +143,15 @@ extension LazyHList {
             self.view = view
         }
         
-        func numberOfSections(in collectionView: UICollectionView) -> Int {
+       public func numberOfSections(in collectionView: UICollectionView) -> Int {
             return self.view.collections.count
         }
 
-        func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
             return self.view.collections[section].count
         }
 
-        func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellReuseIdentifier, for: indexPath) as! HListCell
             let data = self.view.collections[indexPath.section][indexPath.item]
             let content = self.view.contentForData(data)
@@ -155,17 +159,17 @@ extension LazyHList {
             return cell
         }
         
-        func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        public func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
             let cell = cell as! HListCell
             cell.attach(to: self.viewController!)
         }
 
-        func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        public func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
             let cell = cell as! HListCell
             cell.detach()
         }
         
-        func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
             switch self.view.contentSize {
             case .fixed(let size):
                 return size
@@ -180,11 +184,11 @@ extension LazyHList {
             }
         }
 
-        func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
             return self.view.itemSpacing.mainAxisSpacing
         }
 
-        func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
             return self.view.itemSpacing.crossAxisSpacing
         }
     }

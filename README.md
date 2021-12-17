@@ -4,7 +4,16 @@ LazyVStack and LazyHStack does load content lazly however they do not use dequee
 
 LazyHList uses CollectionView under the hood to bring lazy loading and dequeeung into SwiftUI
 
-Example of usage
+# Installation
+
+Install LazyHList using Swift Package Manager.
+
+File > Swift Packages > Add Package Dependency
+Add https://github.com/sezertunca/LazyHList.git
+Select "Up to Next Major" with "1.0.0"
+
+
+# Example of usage
 
 ```
 import SwiftUI
