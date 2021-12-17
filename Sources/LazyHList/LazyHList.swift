@@ -32,21 +32,18 @@ struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
     
     fileprivate let collections: Collections
     fileprivate let contentForData: ContentForData
-    fileprivate let scrollDirection: ScrollDirection
     fileprivate let contentSize: ContentSize
     fileprivate let itemSpacing: ItemSpacing
     fileprivate let rawCustomize: RawCustomize?
 
     init(
         collections: Collections,
-        scrollDirection: ScrollDirection = .horizontal,
         contentSize: ContentSize = .crossAxisFilled(mainAxisLength: 40),
         itemSpacing: ItemSpacing = ItemSpacing(mainAxisSpacing: 10, crossAxisSpacing: 10),
         rawCustomize: RawCustomize? = nil,
         contentForData: @escaping ContentForData
     ) {
         self.collections = collections
-        self.scrollDirection = scrollDirection
         self.contentSize = contentSize
         self.itemSpacing = itemSpacing
         self.rawCustomize = rawCustomize
@@ -59,7 +56,7 @@ struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
 
     func makeUIViewController(context: Context) -> ViewController {
         let coordinator = context.coordinator
-        let viewController = ViewController(coordinator: coordinator, scrollDirection: self.scrollDirection)
+        let viewController = ViewController(coordinator: coordinator, scrollDirection: .horizontal)
         coordinator.viewController = viewController
         self.rawCustomize?(viewController.collectionView)
         return viewController
@@ -67,7 +64,7 @@ struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
 
     func updateUIViewController(_ uiViewController: ViewController, context: Context) {
         context.coordinator.view = self
-        uiViewController.layout.scrollDirection = self.scrollDirection
+        uiViewController.layout.scrollDirection = .horizontal
         self.rawCustomize?(uiViewController.collectionView)
         uiViewController.collectionView.reloadData()
         uiViewController.collectionView.showsHorizontalScrollIndicator = false
@@ -77,20 +74,18 @@ struct LazyHList<Collections, CellContent>: UIViewControllerRepresentable where
 extension LazyHList {
     
     init<Collection>(
-        collection: Collection,
-        scrollDirection: ScrollDirection = .vertical,
-        contentSize: ContentSize,
+        items: Collection,
+        itemSize: ContentSize,
         itemSpacing: ItemSpacing = ItemSpacing(mainAxisSpacing: 0, crossAxisSpacing: 0),
-        rawCustomize: RawCustomize? = nil,
-        contentForData: @escaping ContentForData
+        customize: RawCustomize? = nil,
+        cell: @escaping ContentForData
     ) where Collections == [Collection] {
         self.init(
-            collections: [collection],
-            scrollDirection: scrollDirection,
-            contentSize: contentSize,
+            collections: [items],
+            contentSize: itemSize,
             itemSpacing: itemSpacing,
-            rawCustomize: rawCustomize,
-            contentForData: contentForData
+            rawCustomize: customize,
+            contentForData: cell
         )
     }
 }
@@ -111,7 +106,7 @@ extension LazyHList {
 
         init(coordinator: Coordinator, scrollDirection: ScrollDirection) {
             let layout = UICollectionViewFlowLayout()
-            layout.scrollDirection = scrollDirection
+            layout.scrollDirection = .horizontal
             self.layout = layout
             
             let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -178,14 +173,7 @@ extension LazyHList {
                 let data = self.view.collections[indexPath.section][indexPath.item]
                 return sizeForData(data)
             case .crossAxisFilled(let mainAxisLength):
-                switch self.view.scrollDirection {
-                case .horizontal:
                     return CGSize(width: mainAxisLength, height: collectionView.bounds.height)
-                case .vertical:
-                    fallthrough
-                @unknown default:
-                    return CGSize(width: collectionView.bounds.width, height: mainAxisLength)
-                }
             case .custom(let customSizeForData):
                 let data = self.view.collections[indexPath.section][indexPath.item]
                 return customSizeForData(collectionView, collectionViewLayout, data)
@@ -243,3 +231,4 @@ private extension LazyHList {
         }
     }
 }
+
